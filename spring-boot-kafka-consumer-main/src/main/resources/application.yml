@@ -1,15 +1,19 @@
+server:
+  port: ${SERVER_PORT:8081}
+
 spring:
   application:
-    name: consumer-app
+    name: ${SPRING_APPLICATION_NAME:consumer-app}
   kafka:
     consumer:
-      auto-offset-reset: latest
-#      group-id: consumer-group
-#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    bootstrap-servers: localhost:9092
-    group-id: consumer-group
+      auto-offset-reset: ${KAFKA_CONSUMER_AUTO_OFFSET_RESET:latest}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    enable-auto-commit: ${KAFKA_CONSUMER_ENABLE_AUTO_COMMIT:false}
+    max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:1500}
+    max-poll-interval-ms: ${KAFKA_CONSUMER_MAX_POLL_INTERVAL_MS:600000}
+    group-id: ${KAFKA_GROUP_ID:consumer-group}
     topic:
-      name: test-topic
-server:
-  port: 8081
+      name: ${KAFKA_TOPIC_NAME:test-topic}
+
+springdoc:
+  paths-to-exclude: /swagger-resources/**

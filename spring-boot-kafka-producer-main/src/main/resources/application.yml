@@ -1,10 +1,20 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   application:
-    name: producer-app
+    name: ${SPRING_APPLICATION_NAME:producer-app}
   kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      topic: test-topic
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    acks: ${KAFKA_PRODUCER_ACKS:1}
+    buffer-memory: ${KAFKA_PRODUCER_BUFFER_MEMORY:16777216}  # 16 MB
+    retries: ${KAFKA_PRODUCER_RETRIES:1}
+    batch-size: ${KAFKA_PRODUCER_BATCH_SIZE:65536}           # 64 KB
+    linger-ms: ${KAFKA_PRODUCER_LINGER_MS:10}
+    compression-type: ${KAFKA_PRODUCER_COMPRESSION_TYPE:snappy}
+    max-block-ms: ${KAFKA_PRODUCER_MAX_BLOCK_MS:30000}
+    topic:
+      name: ${KAFKA_TOPIC_NAME:test-topic}
 
-server:
-  port: 8080
+springdoc:
+  paths-to-exclude: /swagger-resources/**

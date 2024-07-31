@@ -15,7 +15,9 @@
 	<name>spring-boot-kafka-consumer</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
-		<java.version>1.8</java.version>
+<!--		<java.version>17</java.version>-->
+		<springfox-swagger.version>2.9.2</springfox-swagger.version>
+		<springdoc-openapi-ui.version>1.8.0</springdoc-openapi-ui.version>
 	</properties>
 	<dependencies>
 		<!-- spring framework web dependency -->
@@ -28,6 +30,22 @@
 		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>${springfox-swagger.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>${springfox-swagger.version}</version>
+		</dependency>
+		<dependency>
+		<groupId>org.springdoc</groupId>
+		<artifactId>springdoc-openapi-ui</artifactId>
+		<version>${springdoc-openapi-ui.version}</version>
 		</dependency>
 	</dependencies>
 
