@@ -7,14 +7,13 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ProducerService {
-
 	@Autowired
 	private KafkaTemplate<String, byte[]> kafkaTemplate;
 
 	@Value("${spring.kafka.topic.name}")
 	private String topicName;
 
-	public void sendMessage(byte[] msg) {
+	public void sendMessage(final byte[] msg) {
 		kafkaTemplate.send(topicName, msg);
 	}
 }

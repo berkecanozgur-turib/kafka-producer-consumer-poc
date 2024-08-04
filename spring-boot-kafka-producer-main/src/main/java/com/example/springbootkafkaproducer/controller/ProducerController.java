@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class ProducerController {
         results.add(String.format("Producer throughput test %d items with %d kilobytes.", itemCount, kiloBytePerItem));
 
         for (int i = 0; i < testCount; ++i) {
-            String report = String.format("  TEST-%d: %s", i + 1, sendMessages(objectsToSend));
+            String report = String.format("  TEST-%d: %s", i + 1, sendThroughputMessages(objectsToSend));
             log.info("{}", report);
             results.add(report);
         }
@@ -49,7 +50,28 @@ public class ProducerController {
         return ResponseEntity.ok(String.join("\n", results));
     }
 
-    private String sendMessages(final List<byte[]> objectsToSend) {
+    @GetMapping("/rttTest/testCount={testCount}/itemCount={itemCount}/kiloBytePerItem={kiloBytePerItem}")
+    public ResponseEntity<Object> rttTest(
+        @PathVariable(name = "testCount") final int testCount,
+        @PathVariable(name = "itemCount") final int itemCount,
+        @PathVariable(name = "kiloBytePerItem") final int kiloBytePerItem) {
+
+        log.info("Producer rtt test: Preparing {} items with {} kilobytes...", itemCount, kiloBytePerItem);
+
+        List<BaseMessage> objectsToSend = new ArrayList<>();
+        for (int i = 0; i < itemCount; ++i) {
+            objectsToSend.add(new BaseMessage(kiloBytePerItem));
+        }
+
+        for (int i = 0; i < testCount; ++i) {
+            sendRttMessages(objectsToSend);
+            log.info("Sent {} items", objectsToSend.size());
+        }
+
+        return ResponseEntity.ok("Producer rtt test: Done {} items with {} kilobytes.");
+    }
+
+    private String sendThroughputMessages(final List<byte[]> objectsToSend) {
         Instant startTime = Instant.now();
 
         for (byte[] bytes : objectsToSend) {
@@ -59,6 +81,13 @@ public class ProducerController {
         Duration between = Duration.between(startTime, Instant.now());
 
         return String.format("Elapsed time: %d sec/%d ms/%d ns", between.toSeconds(), between.toMillis(), between.toNanos());
+    }
+
+    private void sendRttMessages(final List<BaseMessage> objectsToSend) {
+        for (BaseMessage message : objectsToSend) {
+            message.setSendTimestamp(LocalDateTime.now());
+            producerService.sendMessage(serialize(message));
+        }
     }
 
     private byte[] serialize(final Object obj) {
