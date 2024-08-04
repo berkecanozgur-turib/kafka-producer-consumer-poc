@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration debug="true">
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} traceId: %X{trace_id} spanId: %X{span_id} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Production logger -->
+    <appender name="SERVER" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%d{YYYY-MM-dd HH:mm:ss.SSS Z}",
+                        "level": "%level",
+                        "message": "%msg %ex{full}",
+                        "logger_name": "%logger",
+                        "thread_name": "%thread",
+                        "trace_id": "%X{trace_id}",
+                        "span_id": "%X{span_id}"
+                        }
+                    </pattern>
+                </pattern>
+                <arguments/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Dev logger. Similar to "SERVER" but with pretty printing JSON + less fields -->
+    <appender name="DEVELOP" class="ch.qos.logback.core.ConsoleAppender" >
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
+            <providers>
+                <pattern>
+                    <pattern>
+                        {
+                        "timestamp": "%d{YYYY-MM-dd HH:mm:ss.SSS Z}",
+                        "level": "%level",
+                        "message": "%msg %ex{full}",
+                        "logger_name": "%logger",
+                        "thread_name": "%thread"
+                        }
+                    </pattern>
+                </pattern>
+                <arguments/>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- LOGGERS -->
+    <root level="info">
+        <appender-ref ref="${LOG_TARGET:-SERVER}"/>
+    </root>
+
+</configuration>
