@@ -24,24 +24,17 @@ import java.util.List;
 public class KafkaConsumerListener {
     private int expectedItemCount = 100_000;
     private File file;
-    private final List<BaseMessage> receivedMessages = new ArrayList<>();
+    private final List<byte[]> receivedMessages = new ArrayList<>();
+    private final List<LocalDateTime> receivedMessagesTs = new ArrayList<>();
 
     public KafkaConsumerListener() {
         generateFile();
     }
 
-    @KafkaListener(
-            topics = "${spring.kafka.topic.name}",
-            groupId = "${spring.kafka.group-id}")
+    @KafkaListener(topics = "${spring.kafka.topic.name}", groupId = "${spring.kafka.group-id}")
     public void listen(final byte[] recvBytes) {
-        LocalDateTime recvTime = LocalDateTime.now();
-        BaseMessage message = deserialize(recvBytes);
-        if (message == null) {
-            return;
-        }
-
-        message.setRecvTimestamp(recvTime);
-        receivedMessages.add(message);
+        receivedMessagesTs.add(LocalDateTime.now());
+        receivedMessages.add(recvBytes);
 
         if (receivedMessages.size() == expectedItemCount) {
             log.info("Received {} items, dumping reports...", expectedItemCount);
@@ -75,7 +68,9 @@ public class KafkaConsumerListener {
         long totalElapsedTime = 0;
 
         for (int i = 0; i < receivedMessages.size(); ++i) {
-            BaseMessage message = receivedMessages.get(i);
+            BaseMessage message = deserialize(receivedMessages.get(i));
+            message.setRecvTimestamp(receivedMessagesTs.get(i));
+
             long elapsedTime = ChronoUnit.MILLIS.between(message.getSendTimestamp(), message.getRecvTimestamp());
             totalElapsedTime += elapsedTime;
 
@@ -108,7 +103,9 @@ public class KafkaConsumerListener {
 
     private void reset() {
         log.info("Resetting listener.");
+
         receivedMessages.clear();
+        receivedMessagesTs.clear();
     }
 
     private void generateFile() {

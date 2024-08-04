@@ -31,6 +31,10 @@ public class ProducerController {
         @PathVariable(name = "itemCount") final int itemCount,
         @PathVariable(name = "kiloBytePerItem") final int kiloBytePerItem) {
 
+        if (testCount < 1 || itemCount < 1 || kiloBytePerItem < 1) {
+            return ResponseEntity.badRequest().build();
+        }
+
         log.info("Producer throughput test: Preparing {} items with {} kilobytes...", itemCount, kiloBytePerItem);
 
         List<byte[]> objectsToSend = new ArrayList<>();
@@ -50,11 +54,16 @@ public class ProducerController {
         return ResponseEntity.ok(String.join("\n", results));
     }
 
-    @GetMapping("/rttTest/testCount={testCount}/itemCount={itemCount}/kiloBytePerItem={kiloBytePerItem}")
+    @GetMapping("/rttTest/testCount={testCount}/itemProduceSleepMs={itemProduceSleepMs}/itemCount={itemCount}/kiloBytePerItem={kiloBytePerItem}")
     public ResponseEntity<Object> rttTest(
         @PathVariable(name = "testCount") final int testCount,
+        @PathVariable(name = "itemProduceSleepMs") final int itemProduceSleepMs,
         @PathVariable(name = "itemCount") final int itemCount,
         @PathVariable(name = "kiloBytePerItem") final int kiloBytePerItem) {
+
+        if (testCount < 1 || itemProduceSleepMs < 0 || itemCount < 1 || kiloBytePerItem < 1) {
+            return ResponseEntity.badRequest().build();
+        }
 
         log.info("Producer rtt test: Preparing {} items with {} kilobytes...", itemCount, kiloBytePerItem);
 
@@ -64,11 +73,11 @@ public class ProducerController {
         }
 
         for (int i = 0; i < testCount; ++i) {
-            sendRttMessages(objectsToSend);
+            sendRttMessages(objectsToSend, itemProduceSleepMs);
             log.info("Sent {} items", objectsToSend.size());
         }
 
-        return ResponseEntity.ok("Producer rtt test: Done {} items with {} kilobytes.");
+        return ResponseEntity.ok("Producer rtt test: Done " + objectsToSend.size() + " items with " + kiloBytePerItem + " kilobytes.");
     }
 
     private String sendThroughputMessages(final List<byte[]> objectsToSend) {
@@ -83,10 +92,18 @@ public class ProducerController {
         return String.format("Elapsed time: %d sec/%d ms/%d ns", between.toSeconds(), between.toMillis(), between.toNanos());
     }
 
-    private void sendRttMessages(final List<BaseMessage> objectsToSend) {
+    private void sendRttMessages(final List<BaseMessage> objectsToSend, final int itemProduceSleepMs) {
         for (BaseMessage message : objectsToSend) {
             message.setSendTimestamp(LocalDateTime.now());
             producerService.sendMessage(serialize(message));
+
+            if (itemProduceSleepMs > 0) {
+                try {
+                    Thread.sleep(itemProduceSleepMs);
+                } catch (InterruptedException e) {
+                    // no action
+                }
+            }
         }
     }
 
