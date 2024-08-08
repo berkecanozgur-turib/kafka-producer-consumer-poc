@@ -2,6 +2,7 @@ package com.example.springbootkafkaproducer.controller;
 
 import com.example.springbootkafkaproducer.data.BaseMessage;
 import com.example.springbootkafkaproducer.service.ProducerService;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

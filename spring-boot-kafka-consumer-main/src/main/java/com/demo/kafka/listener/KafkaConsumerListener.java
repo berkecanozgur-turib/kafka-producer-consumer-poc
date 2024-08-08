@@ -31,7 +31,7 @@ public class KafkaConsumerListener {
         generateFile();
     }
 
-    @KafkaListener(topics = "${spring.kafka.topic.name}", groupId = "${spring.kafka.group-id}")
+//    @KafkaListener(topics = "${spring.kafka.topic.name}", groupId = "${spring.kafka.group-id}")
     public void listen(final byte[] recvBytes) {
         receivedMessagesTs.add(LocalDateTime.now());
         receivedMessages.add(recvBytes);

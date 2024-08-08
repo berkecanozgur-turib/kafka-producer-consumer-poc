@@ -44,7 +44,7 @@ public class KafkaProducerConfig {
 	public ProducerFactory<String, byte[]> producerFactory() {
 		Map<String, Object> configProps = new HashMap<>();
 		configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaAddress);
-		configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+		configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 		configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
 		configProps.put(ProducerConfig.ACKS_CONFIG, acks);
 		configProps.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
