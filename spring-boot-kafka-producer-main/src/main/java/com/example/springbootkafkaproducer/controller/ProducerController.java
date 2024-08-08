@@ -46,6 +46,8 @@ public class ProducerController {
         List<String> results = new ArrayList<>();
         results.add(String.format("Producer throughput test %d items with %d kilobytes.", itemCount, kiloBytePerItem));
 
+        log.info("Producer rtt test: Sending {} items with {} kilobytes...", itemCount, kiloBytePerItem);
+
         for (int i = 0; i < testCount; ++i) {
             String report = String.format("  TEST-%d: %s", i + 1, sendThroughputMessages(objectsToSend));
             log.info("{}", report);
@@ -73,6 +75,8 @@ public class ProducerController {
             objectsToSend.add(new BaseMessage(kiloBytePerItem));
         }
 
+        log.info("Producer rtt test: Sending {} items with {} kilobytes...", itemCount, kiloBytePerItem);
+
         for (int i = 0; i < testCount; ++i) {
             sendRttMessages(objectsToSend, itemProduceSleepMs);
             log.info("Sent {} items", objectsToSend.size());
@@ -95,7 +99,7 @@ public class ProducerController {
 
     private void sendRttMessages(final List<BaseMessage> objectsToSend, final int itemProduceSleepMs) {
         for (BaseMessage message : objectsToSend) {
-            message.setSendTimestamp(LocalDateTime.now());
+            message.setSendTimestamp(System.nanoTime());
             producerService.sendMessage(serialize(message));
 
             if (itemProduceSleepMs > 0) {

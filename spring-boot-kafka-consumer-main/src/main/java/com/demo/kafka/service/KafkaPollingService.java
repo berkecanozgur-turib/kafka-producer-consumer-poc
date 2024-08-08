@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -44,7 +45,7 @@ public class KafkaPollingService {
     @Value("${spring.kafka.topic.name}")
     private String topicName;
 
-    private final List<LocalDateTime> receivedMessagesTs = new ArrayList<>();
+    private final List<Long> receivedMessagesTs = new ArrayList<>();
 
     public KafkaPollingService(ConsumerFactory<String, byte[]> consumerFactory) {
         this.kafkaConsumer = consumerFactory.createConsumer();
@@ -66,9 +67,13 @@ public class KafkaPollingService {
         Runnable pollTask = () -> {
             while (true) {
                 try {
-                    ConsumerRecords<String, byte[]> poll = kafkaConsumer
-                            .poll(Duration.ofMillis(1));
-                    LocalDateTime now = LocalDateTime.now();
+                    ConsumerRecords<String, byte[]> poll = kafkaConsumer.poll(Duration.ofMillis(1));
+                    long now = System.nanoTime();
+
+                    if (poll.count() > 0) {
+                        log.info("RECEIVED {} items", poll.count());
+                    }
+
                     for (ConsumerRecord<String, byte[]> record : poll) {
                         processRecord(record.value(), now);
                     }
@@ -85,9 +90,9 @@ public class KafkaPollingService {
 
 
 
-    private void processRecord(byte[] record, LocalDateTime ldt) {
+    private void processRecord(byte[] record, long now) {
         receivedMessages.add(record);
-        receivedMessagesTs.add(ldt);
+        receivedMessagesTs.add(now);
 
         if (receivedMessages.size() == expectedItemCount) {
             log.info("Received {} items, dumping reports...", expectedItemCount);
@@ -115,25 +120,31 @@ public class KafkaPollingService {
     }
 
     public String dumpReport() {
-        write("Report Result:\n", StandardOpenOption.TRUNCATE_EXISTING);
+        log.info("Dumping results...");
 
-        double totalElapsedTime = 0.0;
+        long totalElapsedTime = 0;
         StringBuilder sb = new StringBuilder();
+
         for (int i = 0; i < receivedMessages.size(); ++i) {
             BaseMessage message = deserialize(receivedMessages.get(i));
             message.setRecvTimestamp(receivedMessagesTs.get(i));
 
-            double elapsedTime = ChronoUnit.NANOS.between(message.getSendTimestamp(), message.getRecvTimestamp()) / 1_000_000.0;
+            long elapsedTime = message.getRecvTimestamp() - message.getSendTimestamp();
             totalElapsedTime += elapsedTime;
 
             sb.append(String.format(
-                    "Msg-%d: sendTs %s, recvTs %s -> elapsedTime %f ms\n",
+                    "Msg-%d: sendTs %d, recvTs %d -> elapsedTime %f ms, %d ns\n",
                     i + 1,
-                    message.getSendTimestamp().toString(),
-                    message.getRecvTimestamp().toString(),
-                    elapsedTime));
+                    message.getSendTimestamp(),
+                    message.getRecvTimestamp(),
+                    (1.0f * elapsedTime) / 1_000_000,
+                    elapsedTime
+                ));
         }
-        String result = (totalElapsedTime / receivedMessages.size()) + " ms";
+
+        write("Report Result:\n", StandardOpenOption.TRUNCATE_EXISTING);
+
+        String result = (((totalElapsedTime / receivedMessages.size()) / 1_000_000) + " ms, ") + ((totalElapsedTime / receivedMessages.size()) + " ns");
         sb.append("AVERAGE: ").append(result).append("\n");
         write(sb.toString(), StandardOpenOption.APPEND);
 
